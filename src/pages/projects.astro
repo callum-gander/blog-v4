@@ -1,0 +1,106 @@
+---
+import IndexLayout from '@/layouts/IndexLayout.astro'
+import ProjectCard from '@/components/widgets/ProjectCard.astro'
+import { themeConfig } from '@/config'
+import { getCollection, getEntry, render } from 'astro:content'
+import { getProjectOgImage } from '@/utils/fetchOgImage'
+
+// Fetch all projects
+const allProjects = await getCollection('projects')
+
+// Separate main and side projects based on their path
+const mainProjects = allProjects.filter((project) => project.id.startsWith('main/'))
+const sideProjects = allProjects.filter((project) => project.id.startsWith('side/'))
+
+// Fetch OG images for all projects
+const mainProjectsWithImages = await Promise.all(
+  mainProjects.map(async (project) => ({
+    project,
+    ogImage: await getProjectOgImage(project.data.github, project.data.url)
+  }))
+)
+
+const sideProjectsWithImages = await Promise.all(
+  sideProjects.map(async (project) => ({
+    project,
+    ogImage: await getProjectOgImage(project.data.github, project.data.url)
+  }))
+)
+
+// Fetch projects intro content
+const projectsIntroEntry = await getEntry('projectsIntro', 'intro')
+const hasIntro = projectsIntroEntry?.body
+  ? projectsIntroEntry.body.replace(/<!--[\s\S]*?-->/g, '').trim().length > 0
+  : false
+const { Content: IntroContent } = hasIntro && projectsIntroEntry ? await render(projectsIntroEntry) : { Content: null }
+---
+
+<IndexLayout title={`Projects - ${themeConfig.site.title}`} description="My projects portfolio">
+  {
+    hasIntro && IntroContent && (
+      <div class="projects-header prose">
+        <IntroContent />
+      </div>
+    )
+  }
+  <main class="projects-main">
+    {
+      mainProjectsWithImages.length > 0 && (
+        <section class="projects-section">
+          <h2 class="section-title">Main Projects</h2>
+          <div class="projects-grid">
+            {mainProjectsWithImages.map(({ project, ogImage }) => (
+              <ProjectCard project={project} ogImage={ogImage} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      sideProjectsWithImages.length > 0 && (
+        <section class="projects-section">
+          <h2 class="section-title">Side Projects</h2>
+          <div class="projects-grid">
+            {sideProjectsWithImages.map(({ project, ogImage }) => (
+              <ProjectCard project={project} ogImage={ogImage} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </main>
+</IndexLayout>
+
+<style>
+  .projects-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .projects-section {
+    margin-bottom: 3rem;
+  }
+
+  .projects-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0 0 1.5rem 0;
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .projects-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

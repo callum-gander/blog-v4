@@ -1,0 +1,175 @@
+---
+import '@/styles/global.css'
+import type { CollectionEntry } from 'astro:content'
+import BaseHead from '@/components/layout/BaseHead.astro'
+import Footer from '@/components/layout/Footer.astro'
+import BackButton from '@/components/ui/BackButton.astro'
+import GradientMask from '@/components/ui/GradientMask.astro'
+import ImageViewer from '@/components/ui/ImageViewer.astro'
+import LinkCard from '@/components/ui/LinkCard.astro'
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { themeConfig } from '@/config'
+import { getProjectOgImage } from '@/utils/fetchOgImage'
+
+interface Props {
+  project: CollectionEntry<'projects'>
+}
+
+const { project } = Astro.props
+const { title, description, tags, github, url } = project.data
+
+// Fetch OG image from GitHub or URL
+const ogImage = await getProjectOgImage(github, url)
+---
+
+<BaseLayout
+  title={`${title} · ${themeConfig.site.title}`}
+  description={description}
+  type="post"
+>
+  <BaseHead
+    title={`${title} · ${themeConfig.site.title}`}
+    description={description}
+    slot="head"
+  />
+  <div class="project-container">
+    <main>
+      <div class="prose">
+        <GradientMask />
+        <BackButton href="/projects" label="projects" />
+        {ogImage && (
+          <div class="project-og-image">
+            <img src={ogImage} alt={title} />
+          </div>
+        )}
+        <div class="project-header">
+          <h1>{title}</h1>
+          <p class="project-description">{description}</p>
+
+          {
+            tags && tags.length > 0 && (
+              <div class="project-tags">
+                <h3>Technologies</h3>
+                <div class="tags-list">
+                  {tags.map((tag) => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+
+          {
+            (github || url) && (
+              <div class="project-links">
+                {github && (
+                  <a href={github} target="_blank" rel="noopener noreferrer" class="project-link">
+                    GitHub →
+                  </a>
+                )}
+                {url && (
+                  <a href={url} target="_blank" rel="noopener noreferrer" class="project-link">
+                    View →
+                  </a>
+                )}
+              </div>
+            )
+          }
+        </div>
+
+        <slot />
+      </div>
+    </main>
+    {themeConfig.post.imageViewer && <ImageViewer />}
+    {themeConfig.post.linkCard && <LinkCard />}
+    {themeConfig.general.footer && <Footer />}
+  </div>
+</BaseLayout>
+
+<style>
+  .project-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .project-container main {
+    flex: 1;
+  }
+
+  .project-og-image {
+    width: 100%;
+    margin-bottom: 2rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .project-og-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .project-header {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .project-header h1 {
+    margin: 0 0 0.75rem 0;
+  }
+
+  .project-description {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0 0 1.5rem 0;
+  }
+
+  .project-tags h3 {
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tag {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.875rem;
+    background-color: var(--background-secondary, var(--background));
+    color: var(--text-primary);
+    border-radius: 0.25rem;
+    border: 1px solid var(--border);
+  }
+
+  .project-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .project-link {
+    display: inline-block;
+    padding: 0.625rem 1.25rem;
+    background-color: var(--text-primary);
+    color: var(--background);
+    text-decoration: none;
+    border-radius: 0.375rem;
+    font-weight: var(--font-weight-bold);
+    transition: opacity 0.2s;
+  }
+
+  .project-link:hover {
+    opacity: 0.8;
+  }
+</style>

@@ -1,0 +1,51 @@
+---
+import IndexLayout from '@/layouts/IndexLayout.astro'
+import { themeConfig } from '@/config'
+import { getEntry, render } from 'astro:content'
+
+const workEntry = await getEntry('work', 'work')
+const hasContent = workEntry?.body
+  ? workEntry.body.replace(/<!--[\s\S]*?-->/g, '').trim().length > 0
+  : false
+const { Content } = hasContent && workEntry ? await render(workEntry) : { Content: null }
+---
+
+<IndexLayout title={`Work - ${themeConfig.site.title}`} description="Work experience and CV">
+  {
+    hasContent && Content && (
+      <div class="work-content prose">
+        <Content />
+      </div>
+    )
+  }
+  <main></main>
+</IndexLayout>
+
+<style>
+  .work-content {
+    margin-bottom: 1.25rem;
+  }
+
+  .work-content :global(h2) {
+    margin: 2em 0 0.75em 0;
+  }
+
+  .work-content :global(p) {
+    margin: 0.75em 0;
+  }
+
+  .work-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .work-content :global(ul),
+  .work-content :global(ol) {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+  }
+
+  .work-content :global(li) {
+    margin: 0.25em 0;
+    line-height: 1.6;
+  }
+</style>
